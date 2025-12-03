@@ -6,11 +6,12 @@ const uneditableFiles = [
   ".env.local",
   ".env.development",
   ".env.production",
-  "src/lib/*.ts",
+  "**/src/lib/**.ts",
   "opencode.json",
+  "**/.opencode/**",
 ];
 
-export const FileProtectionPlugin: Plugin = async ({ client, $ }) => {
+export const FileProtectionPlugin: Plugin = async () => {
   return {
     "tool.execute.before": async (input, output) => {
       if (
