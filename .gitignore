@@ -25,3 +25,6 @@ dist-ssr
 
 .env*
 .aider*
+
+src/lib/taylor.types.ts
+src/lib/taylor.client.ts
