@@ -17,17 +17,17 @@ const axios = new Axios({
 });
 
 const updateAppStatus = async (status: "Errored" | "Active" | "Pending") => {
-  // await axios.put(
-  //   "/",
-  //   JSON.stringify({
-  //     status,
-  //   }),
-  //   {
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //   }
-  // );
+  await axios.put(
+    "/",
+    JSON.stringify({
+      status,
+    }),
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 };
 
 export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
@@ -39,7 +39,14 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
         path: { id: event.properties.sessionID },
       });
 
-      console.dir(session, { depth: null });
+      const isAnyChange =
+        session.data?.summary?.files && session.data.summary.files > 0;
+
+      if (!isAnyChange) {
+        await updateAppStatus("Active");
+
+        return;
+      }
 
       const result = await $`pnpm build`.catch((error) => error);
 
@@ -83,32 +90,28 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
         const commitMessage =
           session.data?.title ?? `feat: release version v${newVersion}`;
 
-        await $`git config user.name "Taylor AI"`;
-        await $`git config user.email "ai@taylordb.io"`;
-        await $`git add .`;
-        await $`git commit -m ${commitMessage}`;
-        await $`git tag v${newVersion}`;
-        await $`git push origin main --tags`;
-
         packageJson.version = newVersion;
 
         await fs.writeFile(
           "package.json",
           JSON.stringify(packageJson, null, 2)
         );
+
+        await $`git config user.name "Taylor AI"`;
+        await $`git config user.email "ai@taylordb.io"`;
+        await $`git add .`;
+        await $`git commit -m ${commitMessage}`;
+        await $`git tag v${newVersion}`;
+        await $`git push origin main --tags`;
       } catch (error) {
         console.error("Failed to push to git", error);
       }
 
       await updateAppStatus("Active");
-
-      console.log("CHANGE STATUS TO ACTIVE");
     },
 
     "chat.message": async () => {
       await updateAppStatus("Pending");
-
-      console.log("CHANGE STATUS TO PENDING");
     },
   };
 };
