@@ -35,6 +35,12 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
     event: async ({ event }) => {
       if (event.type !== "session.idle") return;
 
+      const session = await client.session.get({
+        path: { id: event.properties.sessionID },
+      });
+
+      console.dir(session, { depth: null });
+
       const result = await $`pnpm build`.catch((error) => error);
 
       if (result.exitCode !== 0) {
@@ -73,10 +79,6 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
           .split(".")
           .map(Number);
         const newVersion = `${major}.${minor}.${patch + 1}`;
-
-        const session = await client.session.get({
-          path: { id: event.properties.sessionID },
-        });
 
         const commitMessage =
           session.data?.title ?? `feat: release version v${newVersion}`;
