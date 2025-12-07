@@ -39,6 +39,13 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
         path: { id: event.properties.sessionID },
       });
 
+      await client.session.update({
+        path: { id: event.properties.sessionID },
+        body: {
+          title: "Building...",
+        },
+      });
+
       const isAnyChange =
         session.data?.summary?.files && session.data.summary.files > 0;
 
