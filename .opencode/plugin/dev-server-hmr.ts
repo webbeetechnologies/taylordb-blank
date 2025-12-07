@@ -39,17 +39,15 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
         path: { id: event.properties.sessionID },
       });
 
-      await client.session.update({
-        path: { id: event.properties.sessionID },
-        body: {
-          title: "Building...",
-        },
-      });
+      // await client.session.update({
+      //   path: { id: event.properties.sessionID },
+      //   body: {
+      //     title: "Building...",
+      //   },
+      // });
 
       const isAnyChange =
         session.data?.summary?.files && session.data.summary.files > 0;
-
-      console.dir(session, { depth: null });
 
       if (!isAnyChange) {
         await updateAppStatus("Active");
@@ -57,7 +55,7 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
         return;
       }
 
-      const result = await $`pnpm build`.catch((error) => error);
+      const result = await $`pnpm build`.quiet().catch((error) => error);
 
       if (result.exitCode !== 0) {
         if (!client.session["tries"]) {
@@ -68,8 +66,6 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
 
         if (client.session["tries"] > 3) {
           await updateAppStatus("Errored");
-
-          console.log("CHANGE STATUS TO ERRORED");
 
           return;
         }
@@ -122,12 +118,12 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
           JSON.stringify(packageJson, null, 2)
         );
 
-        await $`git config user.name "Taylor AI"`;
-        await $`git config user.email "ai@taylordb.io"`;
-        await $`git add .`;
-        await $`git commit -m ${commitMessage}`;
-        await $`git tag v${newVersion}`;
-        await $`git push origin main --tags`;
+        await $`git config user.name "Taylor AI"`.quiet();
+        await $`git config user.email "ai@taylordb.io"`.quiet();
+        await $`git add .`.quiet();
+        await $`git commit -m ${commitMessage}`.quiet();
+        await $`git tag v${newVersion}`.quiet();
+        await $`git push origin main --tags`.quiet();
       } catch (error) {
         console.error("Failed to push to git", error);
       }
