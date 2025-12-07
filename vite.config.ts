@@ -63,6 +63,11 @@ export default defineConfig({
   ],
   server: {
     allowedHosts: [".develop.taylordb.ai", "localhost", "127.0.0.1"],
-    host: "0.0.0.0", // Listen on all network interfaces
+    host: true,
+    port: 5173,
+    hmr: {
+      protocol: "wss",
+      clientPort: 443,
+    },
   },
 });
