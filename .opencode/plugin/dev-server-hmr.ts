@@ -17,17 +17,17 @@ const axios = new Axios({
 });
 
 const updateAppStatus = async (status: "Errored" | "Active" | "Pending") => {
-  await axios.put(
-    "/",
-    JSON.stringify({
-      status,
-    }),
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
+  // await axios.put(
+  //   "/",
+  //   JSON.stringify({
+  //     status,
+  //   }),
+  //   {
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //     },
+  //   }
+  // );
 };
 
 export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
@@ -41,6 +41,8 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
 
       const isAnyChange =
         session.data?.summary?.files && session.data.summary.files > 0;
+
+      console.dir(session, { depth: null });
 
       if (!isAnyChange) {
         await updateAppStatus("Active");
@@ -87,8 +89,24 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
           .map(Number);
         const newVersion = `${major}.${minor}.${patch + 1}`;
 
-        const commitMessage =
-          session.data?.title ?? `feat: release version v${newVersion}`;
+        const messages = await client.session.messages({
+          path: { id: event.properties.sessionID },
+        });
+
+        if (!messages.data) {
+          return;
+        }
+
+        const title = messages.data
+          .reverse()
+          .find(
+            (message) =>
+              message.info.role === "user" &&
+              message.info.summary &&
+              message.info.summary.title
+          )?.info.summary?.["title"];
+
+        const commitMessage = title ?? `feat: release version v${newVersion}`;
 
         packageJson.version = newVersion;
 
