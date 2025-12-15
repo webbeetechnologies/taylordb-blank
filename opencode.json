@@ -3,6 +3,6 @@
     "instructions": [
         "../src/lib/taylordb.types.ts",
         "../src/lib/taylordb-client.ts",
-        "QUERY_BUILDER.md"
+        "./docs/QUERY_BUILDER.md"
     ]
 }
