@@ -27,8 +27,8 @@ importers:
         specifier: ^1.1.13
         version: 1.1.13(@types/react-dom@19.2.3(@types/react@19.2.6))(@types/react@19.2.6)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@taylordb/query-builder':
-        specifier: ^0.9.13
-        version: 0.9.13
+        specifier: ^0.10.1
+        version: 0.10.1
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -1030,11 +1030,11 @@ packages:
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7
 
-  '@taylordb/query-builder@0.9.13':
-    resolution: {integrity: sha512-PpW/uIpDxKhMa7+1iAq1H3bMBpA+ho91AcBlOQ4v6lliax0vVFyLZ9YCcKknEINGy1xsaY2zVDgRg5upNZ2xNw==}
+  '@taylordb/query-builder@0.10.1':
+    resolution: {integrity: sha512-WUyohbO8R+xFC+t+zfTP5VSLakGlBu2gsdWbFWwru4KqLNFW/NCsIvSDhzNObVbtbSgvkf+oVC0li+/z9uZYig==}
 
-  '@taylordb/shared@0.4.2':
-    resolution: {integrity: sha512-vYod82anSozreyDi39unHjdlfgBuv7Ga0yhvoH8hQh7/KSc1vb3E3BVnMuVIsYl26fT95uA7IKy4hr3s2cjUKw==}
+  '@taylordb/shared@0.4.4':
+    resolution: {integrity: sha512-Xykr4I26JapNLePkapBGjz15t9Ep1iLs30VbfCcc2z30x8Qy/2tm+sSa5LcacCP2EaxNVDp2UuYKhZ7kOWBLBQ==}
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -2872,12 +2872,13 @@ snapshots:
       tailwindcss: 4.1.18
       vite: 7.2.2(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)
 
-  '@taylordb/query-builder@0.9.13':
+  '@taylordb/query-builder@0.10.1':
     dependencies:
-      '@taylordb/shared': 0.4.2
+      '@taylordb/shared': 0.4.4
       eventemitter3: 5.0.1
       fast-json-patch: 3.1.1
       json-to-graphql-query: 2.3.0
+      lodash: 4.17.21
       socket.io-client: 4.8.1
       zod: 4.1.12
     transitivePeerDependencies:
@@ -2885,7 +2886,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@taylordb/shared@0.4.2':
+  '@taylordb/shared@0.4.4':
     dependencies:
       lodash: 4.17.21
 

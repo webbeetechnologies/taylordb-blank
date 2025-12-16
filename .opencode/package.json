@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@opencode-ai/plugin": "1.0.126",
+    "@opencode-ai/plugin": "1.0.142",
     "@types/micromatch": "^4.0.10",
     "axios": "^1.13.2",
     "micromatch": "^4.0.8",

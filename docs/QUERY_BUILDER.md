@@ -1,222 +1,452 @@
-# TaylorDB Query Builder
+This package contains the official TypeScript query builder for TaylorDB. It provides a type-safe and intuitive API for building and executing queries against your TaylorDB database.
 
-The official TypeScript query builder for TaylorDB. It provides a type-safe, fluent, and intuitive API for building and executing queries against your TaylorDB database.
+## Available Query Builder Methods
 
-## Features
+**IMPORTANT FOR AI AGENTS**: The following is a complete list of available methods. Do not assume methods exist that are not listed here.
 
-- **Type-Safe Queries**: Leverage your database schema for full type safety and autocompletion, catching errors at compile-time.
-- **Fluent API**: A clean, chainable interface for building complex queries with ease.
-- **Full CRUD Support**: Complete implementation for `select`, `insert`, `update`, and `delete` operations.
-- **Advanced Filtering**: Filter data with a rich set of operators, nested conditions, and cross-table filters on relations.
-- **Complex Selections**: Fetch related data using `with`, select specific columns, or get all columns with `selectAll`.
-- **Pagination and Sorting**: Easily paginate and sort your query results.
-- **Aggregation Queries**: Perform powerful aggregations with grouping and a variety of aggregate functions.
-- **Batch Operations**: Execute multiple queries in a single, efficient request.
-- **Real-time Subscriptions**: Subscribe to queries and receive live updates when data changes.
+### Query Types (Starting Methods)
 
-## Installation
+- `selectFrom(tableName)` - Start a SELECT query
+- `insertInto(tableName)` - Start an INSERT query
+- `update(tableName)` - Start an UPDATE query
+- `deleteFrom(tableName)` - Start a DELETE query
+- `aggregateFrom(tableName)` - Start an aggregation query
+- `batch(queries)` - Execute multiple queries in parallel
+- `transaction(callback)` - Execute queries in a transaction
 
-```bash
-npm install @taylordb/query-builder
-```
+### Query Chain Methods
 
-## Getting Started
+**For SELECT queries (`selectFrom`):**
+- `.select(fields)` - Specify fields to select (array of field names)
+- `.selectAll()` - Select all fields
+- `.where(field, operator, value)` - Add a WHERE condition
+- `.orderBy(field, direction)` - Sort results ('asc' or 'desc')
+- `.paginate(page, pageSize)` - Paginate results
+- `.with(relations)` - Include related records
+- `.count()` - **Count records matching the query** (returns `Promise<number>` directly)
+- `.execute()` - Execute query and return array of results
+- `.executeTakeFirst()` - Execute query and return first result or undefined
 
-### 1. Generate TypeScript Types
+**For INSERT queries (`insertInto`):**
+- `.values(data)` - Set values to insert
+- `.execute()` - Execute insert and return array of inserted records
+- `.executeTakeFirst()` - Execute insert and return first inserted record
 
-First, you need to generate a `taylor.types.ts` file from your TaylorDB schema using the CLI. This file will contain the TypeScript definitions for your database schema, enabling the query builder's type-safety features.
+**For UPDATE queries (`update`):**
+- `.set(data)` - Set values to update
+- `.where(field, operator, value)` - Add a WHERE condition
+- `.execute()` - Execute update and return `{ affectedRecords: number }`
 
-```bash
-npx @taylordb/cli generate-schema
-```
+**For DELETE queries (`deleteFrom`):**
+- `.where(field, operator, value)` - Add a WHERE condition
+- `.execute()` - Execute delete and return `{ affectedRecords: number }`
 
-### 2. Create a Query Builder Instance
+**For AGGREGATION queries (`aggregateFrom`):**
+- `.groupBy(field, direction)` - Group by a field ('asc' or 'desc')
+- `.metrics(aggregateFunctions)` - Specify aggregate functions (e.g., `{ total: count('id') }`)
+- `.where(field, operator, value)` - Add a WHERE condition
+- `.execute()` - Execute aggregation and return array of grouped results
 
-Once you have your types file, you can create a new query builder instance.
+### Aggregate Functions
 
-```typescript
-import { createQueryBuilder } from '@taylordb/query-builder';
-import { TaylorDatabase } from './taylor.types'; // Import the generated types
+Import these functions from `@taylordb/query-builder`:
+- `count(field)` - Count records
+- `sum(field)` - Sum numeric values
+- `avg(field)` - Average numeric values
+- `min(field)` - Minimum value
+- `max(field)` - Maximum value
 
-const qb = createQueryBuilder<TaylorDatabase>({
-  baseUrl: 'YOUR_TAYLORDB_BASE_URL',
-  apiKey: 'YOUR_TAYLORDB_API_KEY',
-});
-```
+## Common Mistakes to Avoid
 
-## Usage
+**⚠️ CRITICAL: The following methods DO NOT EXIST and will cause errors:**
 
-### Select Queries
+- ❌ `.countRecords()` - **DOES NOT EXIST**
+- ❌ `.getCount()` - **DOES NOT EXIST**
+- ❌ `.length` - **DOES NOT EXIST** on query builder chains
 
-#### Basic Select
+**Note**: `.count()` DOES exist for `selectFrom` queries. See the "Counting Records" section below for proper usage.
 
-Select specific columns from a table.
+## Usage Examples
+
+### Selecting Data
+
+You can select data from a table using the `selectFrom` method. You can specify which fields to return, and you can filter, sort, and paginate the results.
 
 ```typescript
 const customers = await qb
   .selectFrom('customers')
-  .select(['firstName', 'lastName', 'email'])
+  .select(['firstName', 'lastName'])
+  .where('firstName', '=', 'John')
+  .orderBy('lastName', 'asc')
+  .paginate(1, 10)
   .execute();
 ```
 
-Use `selectAll()` to fetch all columns.
+### Counting Records
+
+There are two ways to count records in TaylorDB, each suited for different use cases:
+
+#### Method 1: Using `.count()` on `selectFrom` (Recommended for simple counts)
+
+**Use this when**: You need a single count value and don't need grouping or multiple metrics.
 
 ```typescript
-const allCustomerData = await qb
-  .selectFrom('customers')
-  .selectAll()
-  .execute();
-```
-
-#### Filtering
-
-Use `where` and `orWhere` to filter your results.
-
-```typescript
-const johns = await qb
+// Count all users - returns a number directly
+const totalUsers = await qb
   .selectFrom('users')
-  .select(['name', 'email'])
-  .where('name', '=', 'John Doe')
-  .orWhere('email', '=', 'john.doe@example.com')
-  .execute();
-```
+  .count();
 
-You can also nest `where` clauses for complex logic.
+console.log(`Total users: ${totalUsers}`);
 
-```typescript
-const users = await qb
+// Count with filters - respects all WHERE conditions
+const activeUsers = await qb
   .selectFrom('users')
-  .where(qb =>
-    qb.where('role', '=', 'admin').orWhere('lastActive', '>', '2023-01-01')
-  )
-  .execute();
-```
+  .where('status', '=', 'active')
+  .where('age', '>', 18)
+  .count();
 
-#### Fetching Relations
+console.log(`Active adult users: ${activeUsers}`);
 
-Include related records from linked tables using `with`.
-
-```typescript
-// Get users and all fields from their related posts
+// Count with relation filters
 const usersWithPosts = await qb
   .selectFrom('users')
-  .select(['id', 'name'])
-  .with(['posts'])
-  .execute();
+  .where('posts', 'isNotEmpty')
+  .count();
+
+console.log(`Users with posts: ${usersWithPosts}`);
 ```
 
-You can also provide a function to customize the subquery for the relation.
+**Key Points:**
+- `.count()` returns `Promise<number>` directly (not an array)
+- Works with all `selectFrom` chain methods (`.where()`, `.orderBy()`, etc.)
+- Simple and efficient for single count values
+- No need to import `count` function or use destructuring
+
+#### Method 2: Using `aggregateFrom` with `count()` function (For grouped counts or multiple metrics)
+
+**Use this when**: You need counts grouped by field(s) or multiple aggregate metrics.
 
 ```typescript
-// Get users and only the title of their published posts
-const usersWithPublishedPosts = await qb
-  .selectFrom('users')
-  .select(['id', 'name'])
-  .with({
-    posts: (qb) => qb.select(['title']).where('isPublished', '=', true),
+import { count } from '@taylordb/query-builder';
+
+// Count grouped by status (returns array of results)
+const statusCounts = await qb
+  .aggregateFrom('users')
+  .groupBy('status', 'asc')
+  .metrics({
+    total: count('id'),
+  })
+  .execute();
+
+// Find specific status count
+const activeCount = statusCounts.find(item => item.status === 'active')?.total || 0;
+
+// Multiple metrics with grouping
+const userStats = await qb
+  .aggregateFrom('users')
+  .groupBy('status', 'asc')
+  .metrics({
+    total: count('id'),
+    averageAge: avg('age'),
   })
   .execute();
 ```
 
-#### Cross-Table Filtering
+**Key Points:**
+- Must import `count` function from `@taylordb/query-builder`
+- Returns an array of grouped results
+- Use when you need grouping or multiple aggregate functions
+- More flexible but slightly more verbose for simple counts
 
-Filter records based on conditions in a related table.
+#### When to Use Which Method
+
+- **Use `.count()`** when: You need a single count value (e.g., total users, active orders, etc.)
+- **Use `aggregateFrom`** when: You need counts grouped by field(s) or multiple aggregate metrics together
+
+### Inserting Data
+
+You can insert data into a table using the `insertInto` method.
 
 ```typescript
-// Get users who have at least one published post
-const usersWithPublishedPosts = await qb
-  .selectFrom('users')
-  .where('posts', 'hasAnyOf', qb => qb.where('isPublished', '=', true))
+const newCustomer = await qb
+  .insertInto('customers')
+  .values({
+    firstName: 'Jane',
+    lastName: 'Doe',
+  })
   .execute();
 ```
 
-#### Sorting and Pagination
+### Updating Data
 
-```typescript
-const users = await qb
-  .selectFrom('users')
-  .select(['id', 'name'])
-  .orderBy('name', 'asc')
-  .paginate(2, 25) // Page 2, 25 items per page
-  .execute();
-```
-
-### Insert Queries
-
-Insert single or multiple records. Use `returning` to get data back from the new records.
-
-```typescript
-const newUsers = await qb
-  .insertInto('users')
-  .values([
-    { name: 'John Doe', email: 'john.doe@example.com' },
-    { name: 'Jane Doe', email: 'jane.doe@example.com' },
-  ])
-  .returning(['id', 'name'])
-  .execute();
-```
-
-### Update Queries
-
-Update records matching a `where` clause.
+You can update data in a table using the `update` method.
 
 ```typescript
 const { affectedRecords } = await qb
-  .update('users')
-  .set({ name: 'New Name' })
+  .update('customers')
+  .set({ lastName: 'Smith' })
   .where('id', '=', 1)
   .execute();
 ```
 
-### Delete Queries
+### Deleting Data
 
-Delete records matching a `where` clause.
+You can delete data from a table using the `deleteFrom` method.
 
 ```typescript
 const { affectedRecords } = await qb
-  .deleteFrom('users')
+  .deleteFrom('customers')
   .where('id', '=', 1)
   .execute();
 ```
 
 ### Aggregation Queries
 
-Perform powerful aggregations on your data.
+You can perform powerful aggregation queries using the `aggregateFrom` method. You can group by one or more fields and specify aggregate functions to apply.
 
 ```typescript
-const userStats = await qb
-  .aggregateFrom('users')
-  .groupBy('role', 'asc')
-  .withAggregates({
-    id: ['count'],
-    age: ['avg', 'sum'],
+import { count, sum, avg, max, min } from '@taylordb/query-builder';
+
+const aggregates = await qb
+  .aggregateFrom('orders')
+  .groupBy('status', 'asc')
+  .metrics({
+    orderCount: count('id'),
+    totalRevenue: sum('total'),
+    averageOrder: avg('total'),
+    maxOrder: max('total'),
+    minOrder: min('total'),
   })
+  .execute();
+```
+
+### Transactions
+
+You can execute a series of operations within a single atomic transaction. If any operation within the transaction fails, all previous operations will be rolled back.
+
+```typescript
+const newCustomer = await qb.transaction(async tx => {
+  const customer = await tx
+    .insertInto('customers')
+    .values({
+      firstName: 'John',
+      lastName: 'Doe',
+    })
+    .executeTakeFirst();
+
+  if (!customer) {
+    throw new Error('Customer creation failed.');
+  }
+
+  await tx
+    .insertInto('orders')
+    .values({
+      customerId: customer.id,
+      orderDate: new Date().toISOString(),
+      total: 100,
+    })
+    .execute();
+
+  return customer;
+});
+```
+
+### Handling Attachments
+
+You can upload files and associate them with your records using the `uploadAttachments` method. This is useful for handling things like user avatars, product images, or any other file-based data.
+
+First, upload the file(s) to get `Attachment` instances:
+
+```typescript
+const filesToUpload = [
+  { file: new Blob(['file content']), name: 'avatar.png' },
+];
+const attachments = await qb.uploadAttachments(filesToUpload);
+```
+
+Then, you can use the returned `Attachment` instances when creating or updating records. The query builder will automatically convert them into the correct format.
+
+```typescript
+// Create a new customer with an avatar
+const newCustomer = await qb
+  .insertInto('customers')
+  .values({
+    firstName: 'Jane',
+    lastName: 'Doe',
+    avatar: attachments[0], // Use the Attachment instance
+  })
+  .executeTakeFirst();
+
+// Update an existing customer's avatar
+const { affectedRecords } = await qb
+  .update('customers')
+  .set({
+    avatar: attachments[0], // Use the Attachment instance
+  })
+  .where('id', '=', 1)
   .execute();
 ```
 
 ### Batch Queries
 
-Execute multiple queries in a single request for improved performance.
+You can execute multiple queries in a single batch request for improved performance. The result will be a tuple that corresponds to the results of each query in the batch.
 
 ```typescript
-const [users, newUser] = await qb.batch([
-  qb.selectFrom('users').select(['id', 'name']),
-  qb.insertInto('users').values({ name: 'New User' }).returning(['id']),
-]).execute();
+const [customers, newCustomer] = await qb
+  .batch([
+    qb.selectFrom('customers').select(['firstName', 'lastName']),
+    qb.insertInto('customers').values({ firstName: 'John', lastName: 'Doe' }),
+  ])
+  .execute();
 ```
 
-### Real-time Subscriptions
+## Best Practices for Performance
 
-Subscribe to queries and get real-time updates when data changes.
+When working with large databases, optimizing your queries is crucial for fast and efficient data retrieval. Here are some best practices to follow:
+
+### 1. Select Only Necessary Fields
+
+To minimize data transfer and improve query speed, always select only the fields you need. Avoid fetching all columns from a table if you only require a subset of them.
+
+**Bad Practice:**
+```typescript
+// Fetches all fields for all customers, which can be slow with large tables.
+const customers = await qb
+  .selectFrom('customers')
+  .selectAll()
+  .execute();
+```
+
+**Good Practice:**
+```typescript
+// Fetches only the required fields, leading to a faster and more efficient query.
+const customers = await qb
+  .selectFrom('customers')
+  .select(['firstName', 'lastName', 'email'])
+  .execute();
+```
+
+### 2. Use Aggregations for Metrics and Dashboards
+
+When building dashboards or calculating metrics (e.g., total sales, user counts), it's more efficient to perform aggregations directly in the database rather than fetching raw data and processing it in your application. The `aggregateFrom` method is optimized for this purpose.
+
+**Bad Practice (less efficient):**
+```typescript
+// Fetches all orders and then calculates the total count in the application.
+const orders = await qb
+  .selectFrom('orders')
+  .select(['id'])
+  .execute();
+
+const totalOrders = orders.length;
+```
+
+**Good Practice (more efficient):**
+```typescript
+// For simple counts, use .count() method - simpler and more efficient
+const totalOrders = await qb
+  .selectFrom('orders')
+  .count();
+
+// Or if you need grouping, use aggregateFrom
+import { count } from '@taylordb/query-builder';
+const [{ totalOrders }] = await qb
+  .aggregateFrom('orders')
+  .metrics({
+    totalOrders: count('id'),
+  })
+  .execute();
+```
+
+**Example: Counting records grouped by status**
 
 ```typescript
-const { unsubscribe } = await qb
-  .selectFrom('users')
-  .select(['id', 'name'])
-  .subscribe((users) => {
-    console.log('Users updated:', users);
-  });
+import { count } from '@taylordb/query-builder';
 
-// To stop listening for updates
-unsubscribe();
+// Count tasks by status - returns array of grouped results
+const statusCounts = await qb
+  .aggregateFrom('tasks')
+  .groupBy('status', 'asc')
+  .metrics({
+    total: count('id'),
+  })
+  .execute();
+
+// Extract specific counts
+const doneCount = statusCounts.find(item => item.status === 'Done')?.total || 0;
+const pendingCount = statusCounts.find(item => item.status === 'Pending')?.total || 0;
+```
+
+**Example: Simple counts for individual metrics**
+
+```typescript
+// For simple counts without grouping, use .count() method
+const totalDone = await qb
+  .selectFrom('tasks')
+  .where('status', '=', 'Done')
+  .count();
+
+const totalPending = await qb
+  .selectFrom('tasks')
+  .where('status', '=', 'Pending')
+  .count();
+```
+
+**Alternative: Using batch queries for multiple filtered counts**
+
+```typescript
+// If you need multiple simple counts, batch queries can be efficient
+const [totalDone, totalPending] = await qb.batch([
+  qb.selectFrom('tasks').where('status', '=', 'Done').count(),
+  qb.selectFrom('tasks').where('status', '=', 'Pending').count(),
+]);
+```
+
+**Note**: 
+- Use `.count()` for simple single counts (most efficient)
+- Use `aggregateFrom` with `groupBy` when you need counts grouped by field(s)
+- Use `batch` when you need multiple different filtered counts in parallel
+
+Using aggregations reduces the amount of data transferred over the network and leverages the database's power for calculations, resulting in better performance for your application.
+
+## Recipes
+
+### Select with Relations
+
+You can use the `with` method to fetch related records from a linked table.
+
+```typescript
+// Assuming 'customers' has a link field 'orders' to the 'orders' table
+const customersWithOrders = await qb
+  .selectFrom('customers')
+  .select(['firstName', 'lastName'])
+  .with({
+    orders: qb => qb.select(['orderDate', 'total']),
+  })
+  .execute();
+```
+
+### Cross-Filters
+
+You can filter records in one table based on the values in a linked table.
+
+```typescript
+// Get all customers who have placed an order with a total greater than 100
+const highValueCustomers = await qb
+  .selectFrom('customers')
+  .where('orders', 'hasAnyOf', qb => qb.where('total', '>', 100))
+  .execute();
+```
+
+### Conditional Updates
+
+You can use `where` clauses to update only the records that match a specific condition.
+
+```typescript
+// Update the status of all orders placed before a certain date
+const { affectedRecords } = await qb
+  .update('orders')
+  .set({ status: 'archived' })
+  .where('orderDate', '<', '2023-01-01')
+  .execute();
 ```
