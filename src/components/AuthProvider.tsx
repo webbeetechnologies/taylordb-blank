@@ -29,7 +29,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [inputKey, setInputKey] = useState('');
 
   useEffect(() => {
-    // Try to get API key from localStorage
+    // Try to get API key from cookie first (what the client expects)
+    const cookieToken = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("authToken="))
+      ?.split("=")[1];
+
+    if (cookieToken) {
+      setApiKeyState(cookieToken);
+      return;
+    }
+
+    // Fallback to localStorage
     const storedKey = localStorage.getItem('taylordb_api_key');
     if (storedKey) {
       setApiKeyState(storedKey);
@@ -37,7 +48,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const setApiKey = (key: string) => {
+    // Set both localStorage and cookie for compatibility
     localStorage.setItem('taylordb_api_key', key);
+    document.cookie = `authToken=${key}; path=/; max-age=86400`; // 24 hours
     setApiKeyState(key);
     // Reload to reinitialize the TaylorDB client
     window.location.reload();
