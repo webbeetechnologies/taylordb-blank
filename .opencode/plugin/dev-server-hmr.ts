@@ -36,6 +36,11 @@ const sessionHistory: { [sessionId: string]: { sessionFinished: boolean } } =
 export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
   return {
     event: async ({ event }) => {
+      console.dir(event, { depth: null });
+      // @ts-ignore
+      if (1 === "1") {
+        return;
+      }
       if (
         event.type === "session.status" &&
         event.properties.status.type === "busy"
@@ -58,6 +63,11 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
       if (event.type !== "message.updated") return;
 
       if (!event.properties.info.time["completed"]) return;
+
+      console.log(
+        sessionHistory[event.properties.info.sessionID],
+        "isSessionfinished"
+      );
 
       if (!sessionHistory[event.properties.info.sessionID]?.sessionFinished) {
         return;
@@ -220,7 +230,13 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
         },
       });
 
-      const result = await $`pnpm build`.quiet().catch((error) => error);
+      // const result = await $`pnpm build`.quiet().catch((error) => error);
+
+      const result = {
+        exitCode: 1,
+        stdout: "Build just failed, try changing the anything and try again",
+        stderr: "",
+      };
 
       if (result.exitCode !== 0) {
         if (itterations > 3) {
