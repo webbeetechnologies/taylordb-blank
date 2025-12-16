@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { KanbanComponent, ColumnsDirective, ColumnDirective } from "@syncfusion/ej2-react-kanban";
 import { queryBuilder } from "../lib/taylordb.client";
 import { BacklogStatusOptions } from '../lib/taylordb.types';
-import { useAuth } from './AuthProvider';
+import { useAuth } from '../hooks/useAuth';
 
 interface KanbanData {
   Id: number;

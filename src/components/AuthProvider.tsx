@@ -18,10 +18,7 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [apiKey, setApiKeyState] = useState<string | null>(null);
-  const [inputKey, setInputKey] = useState('');
-
-  useEffect(() => {
+  const [apiKey, setApiKeyState] = useState<string | null>(() => {
     // Try to get API key from cookie first (what the client expects)
     const cookieToken = document.cookie
       .split("; ")
@@ -29,16 +26,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       ?.split("=")[1];
 
     if (cookieToken) {
-      setApiKeyState(cookieToken);
-      return;
+      return cookieToken;
     }
 
     // Fallback to localStorage
-    const storedKey = localStorage.getItem('taylordb_api_key');
-    if (storedKey) {
-      setApiKeyState(storedKey);
-    }
-  }, []);
+    return localStorage.getItem('taylordb_api_key');
+  });
+  const [inputKey, setInputKey] = useState('');
 
   const setApiKey = (key: string) => {
     // Set both localStorage and cookie for compatibility
