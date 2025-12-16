@@ -19,6 +19,6 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
-    ignores: ['dist', './src/lib/*.ts'],
+    ignores: ['dist', './src/lib/*.ts', '.opencode/**'],
   },
 ])
