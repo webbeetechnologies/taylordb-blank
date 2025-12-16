@@ -1,24 +1,17 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { createContext } from 'react';
 
-interface AuthContextType {
+export interface AuthContextType {
   isAuthenticated: boolean;
   apiKey: string | null;
   setApiKey: (key: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
 
 interface AuthProviderProps {
   children: ReactNode;

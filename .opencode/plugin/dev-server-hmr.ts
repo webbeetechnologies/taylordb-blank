@@ -30,51 +30,20 @@ const updateAppStatus = async (status: "Errored" | "Active" | "Pending") => {
   // );
 };
 
-const sessionHistory: { [sessionId: string]: { sessionFinished: boolean } } =
-  {};
-
 export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
   return {
     event: async ({ event }) => {
-      console.dir(event, { depth: null });
-      // @ts-ignore
-      if (1 === "1") {
+      if (!(event.type === "session.error" || event.type === "session.idle"))
         return;
-      }
-      if (
-        event.type === "session.status" &&
-        event.properties.status.type === "busy"
-      ) {
-        sessionHistory[event.properties.sessionID] = {
-          sessionFinished: false,
-        };
 
-        return;
-      }
+      const sessionID = event.properties.sessionID as string;
 
-      if (event.type === "session.idle") {
-        sessionHistory[event.properties.sessionID] = {
-          sessionFinished: true,
-        };
-
-        return;
-      }
-
-      if (event.type !== "message.updated") return;
-
-      if (!event.properties.info.time["completed"]) return;
-
-      console.log(
-        sessionHistory[event.properties.info.sessionID],
-        "isSessionfinished"
-      );
-
-      if (!sessionHistory[event.properties.info.sessionID]?.sessionFinished) {
-        return;
-      }
+      const isAborted =
+        event.type === "session.error" &&
+        event.properties.error?.name === "MessageAbortedError";
 
       const messages = await client.session.messages({
-        path: { id: event.properties.info.sessionID },
+        path: { id: sessionID },
       });
 
       if (!messages.data) {
@@ -84,7 +53,7 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
             message: "No messages found",
             service: "dev-server-hmr",
             extra: {
-              sessionID: event.properties.info.sessionID,
+              sessionID: event.properties.sessionID,
             },
           },
         });
@@ -93,7 +62,7 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
       }
 
       const session = await client.session.get({
-        path: { id: event.properties.info.sessionID },
+        path: { id: sessionID },
       });
 
       const commitAndPush = async () => {
@@ -104,7 +73,7 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
               message: "Committing and pushing",
               service: "dev-server-hmr",
               extra: {
-                sessionID: event.properties.info.sessionID,
+                sessionID,
               },
             },
           });
@@ -144,7 +113,7 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
               message: "Committed and pushed",
               service: "dev-server-hmr",
               extra: {
-                sessionID: event.properties.info.sessionID,
+                sessionID,
               },
             },
           });
@@ -155,7 +124,7 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
               message: "Failed to push to git",
               service: "dev-server-hmr",
               extra: {
-                sessionID: event.properties.info.sessionID,
+                sessionID,
                 error: error.message,
                 stack: error.stack,
               },
@@ -163,10 +132,6 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
           });
         }
       };
-
-      const isChatAborted =
-        event.properties.info["error"] &&
-        event.properties.info["error"]["name"] === "MessageAbortedError";
 
       const isAnyChange =
         session.data?.summary?.files && session.data.summary.files > 0;
@@ -178,7 +143,7 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
             message: "No changes made",
             service: "dev-server-hmr",
             extra: {
-              sessionID: event.properties.info.sessionID,
+              sessionID,
             },
           },
         });
@@ -188,14 +153,14 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
         return;
       }
 
-      if (isChatAborted) {
+      if (isAborted) {
         await client.app.log({
           body: {
             level: "info",
             message: "Chat aborted",
             service: "dev-server-hmr",
             extra: {
-              sessionID: event.properties.info.sessionID,
+              sessionID,
             },
           },
         });
@@ -225,7 +190,7 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
           message: "Building project",
           service: "dev-server-hmr",
           extra: {
-            sessionID: event.properties.info.sessionID,
+            sessionID,
           },
         },
       });
@@ -246,7 +211,7 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
               message: "Failed to build project",
               service: "dev-server-hmr",
               extra: {
-                sessionID: event.properties.info.sessionID,
+                sessionID,
               },
             },
           });
@@ -262,13 +227,13 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
             message: `Failed to build project, trying again: ${itterations}`,
             service: "dev-server-hmr",
             extra: {
-              sessionID: event.properties.info.sessionID,
+              sessionID,
             },
           },
         });
 
         await client.session.prompt({
-          path: { id: event.properties.info.sessionID },
+          path: { id: sessionID },
           body: {
             parts: [
               {
