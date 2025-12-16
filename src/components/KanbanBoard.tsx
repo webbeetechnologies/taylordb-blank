@@ -22,6 +22,11 @@ export function KanbanBoard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+
     const fetchTasks = async () => {
       try {
         setLoading(true);
@@ -51,7 +56,7 @@ export function KanbanBoard() {
     };
 
     fetchTasks();
-  }, []);
+  }, [isAuthenticated]);
 
   const cardTemplate = (props: KanbanData) => {
     return (
@@ -78,6 +83,16 @@ export function KanbanBoard() {
       </div>
     );
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-muted-foreground">
+          Please authenticate to view the Kanban board
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
