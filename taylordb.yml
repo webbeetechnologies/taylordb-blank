@@ -1,0 +1,41 @@
+version: 1
+
+app:
+  name: blank
+  runtime:
+    type: node
+    version: 20
+    packageManager: pnpm
+
+paths:
+  root: .
+  dist: dist
+
+environment:
+  envVars:
+    NODE_ENV: production
+
+install:
+  commands:
+    - pnpm install
+
+build:
+  commands:
+    - pnpm build
+
+dev:
+  command: pnpm dev
+  port: 5173
+  readyWhen:
+    log: "Local:"
+
+start:
+  command: pnpm start
+  port: 3000
+
+taylordb:
+  types:
+    output: src/lib/taylordb.types.ts
+    format: typescript
+    onChange:
+      - pnpm lint
