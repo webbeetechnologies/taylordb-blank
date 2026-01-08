@@ -1,43 +1,39 @@
+# yaml-language-server: $schema=https://server-vms.develop.taylordb.ai/apps/config-schema/v1
+
 version: 1
 
-app:
-  name: blank
-  runtime:
-    type: node
-    version: 20
-    packageManager: pnpm
+project: blank
 
-paths:
-  root: .
-  dist: dist
+runtime:
+  type: node
+  version: 20
+  packageManager: pnpm
 
-environment:
-  envVars:
-    NODE_ENV: production
-    VITE_TAYLORDB_BASE_ID: vars.TAYLORDB_SERVER_ID
-    VITE_TAYLORDB_BASE_URL: vars.TAYLORDB_BASE_URL
-
-install:
-  commands:
-    - pnpm install
-
-build:
-  commands:
-    - pnpm build
-
-dev:
-  command: pnpm dev
-  port: 5173
-  readyWhen:
-    log: "Local:"
-
-start:
-  command: pnpm start
-  port: 3000
+services:
+  client:
+    workDir: .
+    install:
+      commands:
+        - pnpm install
+    dev:
+      command: pnpm dev
+      port: 5173
+      env:
+        vars:
+          NODE_ENV: production
+          VITE_TAYLORDB_BASE_ID: vars.TAYLORDB_SERVER_ID
+          VITE_TAYLORDB_BASE_URL: vars.TAYLORDB_BASE_URL
 
 taylordb:
   types:
-    output: src/lib/taylordb.types.ts
-    format: typescript
-    onChange:
-      - pnpm lint
+    - output: src/lib/taylordb.types.ts
+      format: typescript
+      onChange:
+        - pnpm lint
+
+preview:
+  service: client
+
+routing:
+  - path: /
+    service: client
