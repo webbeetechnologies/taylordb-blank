@@ -4,36 +4,37 @@ import { Axios } from "axios";
 import { promises as fs } from "fs";
 import { z } from "zod";
 
-const { vmOrchestrationStatusUpdateUrl } = z
-  .object({
-    vmOrchestrationStatusUpdateUrl: z.string(),
-  })
-  .parse({
-    vmOrchestrationStatusUpdateUrl:
-      process.env.TAYLORDB_VM_ORCHESTRATION_STATUS_UPDATE_URL,
-  });
+// const { vmOrchestrationStatusUpdateUrl } = z
+//   .object({
+//     vmOrchestrationStatusUpdateUrl: z.string(),
+//   })
+//   .parse({
+//     vmOrchestrationStatusUpdateUrl:
+//       process.env.TAYLORDB_VM_ORCHESTRATION_STATUS_UPDATE_URL,
+//   });
 
-const axios = new Axios({
-  baseURL: vmOrchestrationStatusUpdateUrl,
-});
+// const axios = new Axios({
+//   baseURL: vmOrchestrationStatusUpdateUrl,
+// });
 
 const updateAppStatus = async (status: "Errored" | "Active" | "Pending") => {
-  await axios.put(
-    "/",
-    JSON.stringify({
-      status,
-    }),
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
+  console.log(status);
+  // await axios.put(
+  //   "/",
+  //   JSON.stringify({
+  //     status,
+  //   }),
+  //   {
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //     },
+  //   }
+  // );
 };
 
 const sessionRetries: Record<string, number> = {};
 
-export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
+export const BuildPlugin: Plugin = async ({ client, $ }) => {
   return {
     event: async ({ event }) => {
       const isMessagedDone =
@@ -51,6 +52,8 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
       const isAnyChange =
         (await $`git status --porcelain`.quiet()).stdout.toString().trim() !==
         "";
+
+      console.log({ isAnyChange });
 
       if (!isAnyChange || isAbortionError) {
         await updateAppStatus("Active");
@@ -136,6 +139,7 @@ export const DevServerHMRPlugin: Plugin = async ({ client, $ }) => {
           JSON.stringify(packageJson, null, 2)
         );
 
+        console.log("Pushing");
         await $`git add .`.quiet();
         await $`GIT_AUTHOR_NAME="Taylor AI" GIT_AUTHOR_EMAIL="ai@taylordb.io" GIT_COMMITTER_NAME="Taylor AI" GIT_COMMITTER_EMAIL="ai@taylordb.io" git commit -m ${commitMessage}`.quiet();
         await $`git tag v${newVersion}`.quiet();
