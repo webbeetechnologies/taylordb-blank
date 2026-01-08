@@ -4,32 +4,31 @@ import { Axios } from "axios";
 import { promises as fs } from "fs";
 import { z } from "zod";
 
-// const { vmOrchestrationStatusUpdateUrl } = z
-//   .object({
-//     vmOrchestrationStatusUpdateUrl: z.string(),
-//   })
-//   .parse({
-//     vmOrchestrationStatusUpdateUrl:
-//       process.env.TAYLORDB_VM_ORCHESTRATION_STATUS_UPDATE_URL,
-//   });
+const { vmOrchestrationStatusUpdateUrl } = z
+  .object({
+    vmOrchestrationStatusUpdateUrl: z.string(),
+  })
+  .parse({
+    vmOrchestrationStatusUpdateUrl:
+      process.env.TAYLORDB_VM_ORCHESTRATION_STATUS_UPDATE_URL,
+  });
 
-// const axios = new Axios({
-//   baseURL: vmOrchestrationStatusUpdateUrl,
-// });
+const axios = new Axios({
+  baseURL: vmOrchestrationStatusUpdateUrl,
+});
 
 const updateAppStatus = async (status: "Errored" | "Active" | "Pending") => {
-  console.log(status);
-  // await axios.put(
-  //   "/",
-  //   JSON.stringify({
-  //     status,
-  //   }),
-  //   {
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //   }
-  // );
+  await axios.put(
+    "/",
+    JSON.stringify({
+      status,
+    }),
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 };
 
 const sessionRetries: Record<string, number> = {};
