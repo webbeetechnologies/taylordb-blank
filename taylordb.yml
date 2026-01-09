@@ -22,7 +22,7 @@ services:
         vars:
           NODE_ENV: production
           VITE_TAYLORDB_BASE_ID: vars.TAYLORDB_SERVER_ID
-          VITE_TAYLORDB_BASE_URL: vars.TAYLORDB_BASE_URL
+          VITE_TAYLORDB_BASE_URL: vars.TAYLORDB_EXTERNAL_BASE_URL
 
 taylordb:
   types:
