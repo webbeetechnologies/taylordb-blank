@@ -4,6 +4,14 @@ import { Axios } from "axios";
 import { promises as fs } from "fs";
 import { z } from "zod";
 
+export enum AppStatus {
+  PENDING_PROVISION = "PENDING_PROVISION",
+  PROVISIONING = "PROVISIONING",
+  RUNNING = "RUNNING",
+  FAILED = "FAILED",
+  TERMINATED = "TERMINATED",
+}
+
 const { vmOrchestrationStatusUpdateUrl } = z
   .object({
     vmOrchestrationStatusUpdateUrl: z.string(),
@@ -17,7 +25,7 @@ const axios = new Axios({
   baseURL: vmOrchestrationStatusUpdateUrl,
 });
 
-const updateAppStatus = async (status: "Errored" | "Active" | "Pending") => {
+const updateAppStatus = async (status: AppStatus) => {
   await axios.put(
     "/",
     JSON.stringify({
@@ -55,7 +63,7 @@ export const BuildPlugin: Plugin = async ({ client, $ }) => {
       console.log({ isAnyChange });
 
       if (!isAnyChange || isAbortionError) {
-        await updateAppStatus("Active");
+        await updateAppStatus(AppStatus.RUNNING);
 
         return;
       }
@@ -72,7 +80,7 @@ export const BuildPlugin: Plugin = async ({ client, $ }) => {
         }
 
         if (sessionRetries[event.properties.info.sessionID] > 3) {
-          await updateAppStatus("Errored");
+          await updateAppStatus(AppStatus.FAILED);
 
           return;
         }
@@ -147,11 +155,11 @@ export const BuildPlugin: Plugin = async ({ client, $ }) => {
         console.error("Failed to push to git", error);
       }
 
-      await updateAppStatus("Active");
+      await updateAppStatus(AppStatus.RUNNING);
     },
 
     "chat.message": async () => {
-      await updateAppStatus("Pending");
+      await updateAppStatus(AppStatus.PROVISIONING);
     },
   };
 };
