@@ -74,6 +74,7 @@ export default defineConfig({
     host: true,
     port: 5173,
     hmr: {
+      host: "",
       protocol: "wss",
       clientPort: 443,
       path: "/__vite_hmr",
