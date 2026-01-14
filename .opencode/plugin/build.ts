@@ -9,6 +9,7 @@ enum AppStatus {
   PROVISIONING = "PROVISIONING",
   RUNNING = "RUNNING",
   FAILED = "FAILED",
+  BUSY = "BUSY",
   TERMINATED = "TERMINATED",
 }
 
@@ -159,7 +160,7 @@ export const BuildPlugin: Plugin = async ({ client, $ }) => {
     },
 
     "chat.message": async () => {
-      await updateAppStatus(AppStatus.PROVISIONING);
+      await updateAppStatus(AppStatus.BUSY);
     },
   };
 };
