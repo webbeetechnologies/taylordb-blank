@@ -4,7 +4,7 @@ import { Axios } from "axios";
 import { promises as fs } from "fs";
 import { z } from "zod";
 
-export enum AppStatus {
+enum AppStatus {
   PENDING_PROVISION = "PENDING_PROVISION",
   PROVISIONING = "PROVISIONING",
   RUNNING = "RUNNING",
